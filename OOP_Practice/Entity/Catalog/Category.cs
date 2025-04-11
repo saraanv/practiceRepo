@@ -4,9 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace initial.Entity.Catalog
+namespace BookStore
 {
-    internal class Category
+    public class Category
     {
+        public string Title { get; set; }
+
+        public Category (string title)
+        {
+            Title = title;
+        }
+
+        public override string ToString()
+        {
+            return $"{Title}";
+        }
     }
 }
