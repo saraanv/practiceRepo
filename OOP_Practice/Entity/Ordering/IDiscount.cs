@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace initial.Entity.Ordering
 {
-    internal class IDiscount
+    public interface IDiscount
     {
+        decimal ApplyDiscount(decimal total);
     }
 }
