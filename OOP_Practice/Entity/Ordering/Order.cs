@@ -20,7 +20,7 @@ namespace BookStore
             decimal total = 0;
             foreach (var book in Books)
             {
-                total += book.price;
+                total += book.Price;
             }
             return total;
         }
