@@ -36,7 +36,7 @@ namespace BookStore
 
                             //Create Book
                             Book book1 = new Book("C# basics" , "John Doe" , 29.99m, Category1);\
-                            Book book2 = new Book("Learning ASP.NET" , "Jane Smith", 39.99, Category2);
+                            Book book2 = new Book("Learning ASP.NET" , "Jane Smith", 39.99m, Category2);
 
                             Console.WriteLine(book1);
                             Console.WriteLine(book2);
