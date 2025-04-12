@@ -50,7 +50,7 @@ namespace BookStore
                             //Dicsount (percentage)
                             IDiscount percentageDiscount = new PercentageDiscount(10);
                             decimal total = order.CalculateTotal();
-                            ecimal discountedTotalPercentage = percentageDiscount.ApplyDiscount(total);
+                            decimal discountedTotalPercentage = percentageDiscount.ApplyDiscount(total);
                             Console.WriteLine($"Total after percentage discount: ${discountedTotalPercentage}");
 
                             //Discount (fixed)
