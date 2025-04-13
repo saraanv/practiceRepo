@@ -25,7 +25,7 @@ namespace BookStore
     {
         private decimal _FixedAmount;
 
-        public PercentageDiscount(decimal fixedAmount)
+        public FixedAmountDiscount(decimal fixedAmount)
         {
             _FixedAmount = fixedAmount;
         }
