@@ -8,7 +8,7 @@
     public string Name { get { return name; } set { name = value; } }
     public int Age { get {return age; } set { age = value; } }
 
-    //method
+    //constructor
     public Student()
     {
         Console.WriteLine("Name:");
@@ -19,6 +19,7 @@
         age = int.Parse(input2);
     }
 
+     //method
     public void Introduce()
     {
         Console.WriteLine($"Hello , my name is {name} and I am {age} years old.");
