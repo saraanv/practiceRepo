@@ -40,18 +40,28 @@ class Program
 {
     public static void Main(string[] args)
     {
-        Student student = new Student();
-        student.Name = "Sara Alinezhad";
-        student.Age = 21;
-        student.StudentID = 401463156;
-        student.Major = "Computer Enginering";
-        student.GetDetails();
 
-        Professor professor = new Professor();
-        professor.Name = "Dr.Professor Unknown";
-        professor.Age = 56;
-        professor.ProfessorID = 123456;
-        professor.Subject = "Artificial Intelligence";
-        professor.GetDetails();
+        List<Student> students = new List<Student>
+        {
+        new Student { Name = "Sara Alinezhad", Age = 21, StudentID = 1234, Major = "Computer Enginering" },
+        new Student { Name = "Ali Alavi", Age = 20, StudentID = 234, Major = "Computer Science" },
+        };
+
+
+        List<Professor> professors = new List<Professor>
+        {
+        new Professor { Name = "Unknown 1", Age = 56, ProfessorID = 1234, Subject = "AI" },
+        new Professor { Name = "Unknown 2", Age = 55, ProfessorID = 234, Subject = "Network" },
+        };
+
+        foreach (Student student in students)
+        {
+            student.GetDetails();
+        }
+
+        foreach (Professor professor in professors)
+        {
+            professor.GetDetails(); 
+        }
     }
 }
