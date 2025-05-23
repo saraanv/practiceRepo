@@ -1,70 +1,93 @@
-﻿using System.Numerics;
-using System.Security.Cryptography.X509Certificates;
+using System;
+using System.Collections.Generic;
 
-class Person
+class RoomFullException : Exception
 {
-    public string  Name { get; set; }
-    public int Age  { get; set; }
-    public int NationalId { get; set; }
+    public RoomFullException(string message) : base(message) { }
+}
 
-    public void GetDetails()
+public interface IDiagnosisStrategy
+{
+    void Diagnose(Patient patient, string diagnosis);
+}
+
+class GeneralDiagnosis : IDiagnosisStrategy
+{
+    public void Diagnose(Patient patient, string diagnosis)
     {
-        Console.WriteLine($"Name : {Name} , Age : {Age} , NationalId : {NationalId}");
+        patient.AddToMedicalHistory("General: " + diagnosis);
     }
 }
-class Patient : Person
+
+class SpecialistDiagnosis : IDiagnosisStrategy
+{
+    public void Diagnose(Patient patient, string diagnosis)
+    {
+        patient.AddToMedicalHistory("Specialist: " + diagnosis);
+    }
+}
+
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public int NationalId { get; set; }
+    public virtual void GetDetails()
+    {
+        Console.WriteLine($"Name: {Name}, Age: {Age}, NationalId: {NationalId}");
+    }
+}
+
+public class Patient : Person
 {
     public int PatientId { get; set; }
     public List<string> MedicalHistory = new List<string>();
-
     public void AddToMedicalHistory(string disease)
     {
-        MedicalHistory.Add( disease );
+        MedicalHistory.Add(disease);
     }
-
-    public void GetDetails()
+    public override void GetDetails()
     {
-        Console.WriteLine($"Name : {Name} , Age : {Age} , NationalId : {NationalId} " +
-            $", Patient ID: {PatientId}");
+        Console.WriteLine($"Name: {Name}, Age: {Age}, NationalId: {NationalId}, Patient ID: {PatientId}");
         Console.WriteLine("Medical History:");
-        foreach (var disease in MedicalHistory)
+        foreach (var d in MedicalHistory)
         {
-            Console.WriteLine($"- {disease}");
+            Console.WriteLine($"- {d}");
         }
     }
 }
 
-class Doctor : Person
+public class Doctor : Person
 {
     public int DoctorId { get; set; }
     public string Specialization { get; set; }
-
-    public void Diagnose(Patient patient , string diagnosis)
+    public IDiagnosisStrategy DiagnosisStrategy { get; set; }
+    public Doctor()
     {
-        patient.AddToMedicalHistory( diagnosis );
+        DiagnosisStrategy = new GeneralDiagnosis();
     }
-    public void GetDetails()
+    public void Diagnose(Patient patient, string diagnosis)
     {
-        Console.WriteLine($"Name : {Name} , Age : {Age} , NationalId : {NationalId} " +
-            $", Doctor ID : {DoctorId}, Specialization : {Specialization}");
+        DiagnosisStrategy.Diagnose(patient, diagnosis);
+    }
+    public override void GetDetails()
+    {
+        Console.WriteLine($"Name: {Name}, Age: {Age}, NationalId: {NationalId}, Doctor ID: {DoctorId}, Specialization: {Specialization}");
     }
 }
+
 class Room
 {
-    public int RoomNumber  { get; set; }
+    public int RoomNumber { get; set; }
     public int Capacity { get; set; }
     public List<Patient> Patients = new List<Patient>();
-
     public void AssignPatient(Patient patient)
     {
-        if (Patients.Count >= Capacity )
+        if (Patients.Count >= Capacity)
         {
-            throw new InvalidOperationException($"Room {RoomNumber} is full.");
+            throw new RoomFullException($"Room {RoomNumber} is full.");
         }
-        else
-        {
-            Patients.Add(patient);
-        }
+        Patients.Add(patient);
     }
     public void RemovePatient(Patient patient)
     {
@@ -72,108 +95,130 @@ class Room
     }
     public void GetDetails()
     {
-        Console.WriteLine($"Room Number = {RoomNumber} , Capacity = {Capacity} , Current Patients = {Patients.Count}");
-
-        foreach (var patient in Patients)
+        Console.WriteLine($"Room Number: {RoomNumber}, Capacity: {Capacity}, Current Patients: {Patients.Count}");
+        foreach (var p in Patients)
         {
-            patient.GetDetails();
+            p.GetDetails();
         }
-
     }
 }
 
-
+public static class PersonFactory
+{
+    public static Person CreatePerson(string type, string name, int nationalId, int id, int age = 0, string specialization = "")
+    {
+        if (type == "Patient")
+        {
+            return new Patient { Name = name, NationalId = nationalId, PatientId = id, Age = age };
+        }
+        else if (type == "Doctor")
+        {
+            var doc = new Doctor { Name = name, NationalId = nationalId, DoctorId = id, Age = age, Specialization = specialization };
+            if (specialization == "Specialist")
+            {
+                doc.DiagnosisStrategy = new SpecialistDiagnosis();
+            }
+            return doc;
+        }
+        else
+        {
+            throw new ArgumentException("Unknown person type.");
+        }
+    }
+}
 
 class Hospital
 {
+    private static Hospital _instance;
     public List<Doctor> Doctors = new List<Doctor>();
     public List<Room> Rooms = new List<Room>();
-
+    private Hospital() { }
+    public static Hospital GetInstance()
+    {
+        if (_instance == null)
+        {
+            _instance = new Hospital();
+        }
+        return _instance;
+    }
     public void AdmitPatient(Patient patient)
     {
-        foreach (Room room in Rooms)
+        foreach (var r in Rooms)
         {
-            if (room.Capacity > room.Patients.Count)
+            if (r.Patients.Count < r.Capacity)
             {
-                room.AssignPatient(patient);
-                Console.WriteLine($"Patient {patient.Name} added to room {room.RoomNumber} ");
+                r.AssignPatient(patient);
+                Console.WriteLine($"Patient {patient.Name} added to room {r.RoomNumber}");
                 return;
             }
-            else
-            {
-                Console.WriteLine("No available room");
-            }
         }
+        Console.WriteLine("No available room.");
     }
     public void DischargePatient(Patient patient)
     {
-        foreach (Room room in Rooms)
+        foreach (var r in Rooms)
         {
-            if (room.Patients.Contains(patient))
+            if (r.Patients.Contains(patient))
             {
-                room.RemovePatient(patient);
-                Console.WriteLine($" Patient {patient} removed from {room.RoomNumber}");
+                r.RemovePatient(patient);
+                Console.WriteLine($"Patient {patient.Name} removed from room {r.RoomNumber}");
                 return;
             }
-            else
-            {
-                Console.WriteLine($" Patient {patient} not found!");
-            }
         }
+        Console.WriteLine($"Patient {patient.Name} not found.");
     }
-    public void PrintHospitalDetails()
+    public void GetDetails()
     {
-        Console.WriteLine("======== HOSPITAL DETAILS ========");
-
-        Console.WriteLine("\n--- Doctors ---");
-        foreach (var doctor in Doctors)
+        Console.WriteLine("Doctors:");
+        foreach (var d in Doctors)
         {
-            doctor.GetDetails();
+            d.GetDetails();
         }
-
-        Console.WriteLine("\n--- Rooms ---");
-        foreach (var room in Rooms)
+        Console.WriteLine("Rooms:");
+        foreach (var r in Rooms)
         {
-            room.GetDetails();
+            r.GetDetails();
         }
-
-        Console.WriteLine("\n--- Patients in Hospital ---");
-        foreach (var room in Rooms)
-        {
-            foreach (var patient in room.Patients)
-            {
-                patient.GetDetails();
-            }
-        }
-
-        Console.WriteLine("==================================");
     }
 }
 
-    class Program
+class Program
+{
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
+        var hospital = Hospital.GetInstance();
+
+        var patient1 = (Patient)PersonFactory.CreatePerson("Patient", "Sara", 123, 1, 25);
+        var patient2 = (Patient)PersonFactory.CreatePerson("Patient", "Ali", 124, 2, 30);
+
+        var doctor1 = (Doctor)PersonFactory.CreatePerson("Doctor", "Rana", 223, 1, 40, "General");
+        var doctor2 = (Doctor)PersonFactory.CreatePerson("Doctor", "Mahdi", 224, 2, 50, "Specialist");
+
+        hospital.Doctors.Add(doctor1);
+        hospital.Doctors.Add(doctor2);
+
+        var room1 = new Room { RoomNumber = 1, Capacity = 2 };
+        var room2 = new Room { RoomNumber = 2, Capacity = 2 };
+
+        hospital.Rooms.Add(room1);
+        hospital.Rooms.Add(room2);
+
+        try
         {
-            Hospital hospital = new Hospital();
-
-
-            hospital.Doctors.Add(new Doctor { Name = "Rana", NationalId = 123, DoctorId = 1, Age = 27, Specialization = "MD" });
-            hospital.Doctors.Add(new Doctor { Name = "Mahdi", NationalId = 234, DoctorId = 2, Age = 47, Specialization = "MD" });
-            
-
-            hospital.Rooms.Add(new Room { RoomNumber = 1, Capacity = 3 });
-            hospital.Rooms.Add(new Room { RoomNumber = 2, Capacity = 2 });
-
-            Patient patient1 = new Patient { Name = "Sara", NationalId = 123, PatientId = 1 , Age = 21 };
-            patient1.AddToMedicalHistory("Cold");
             hospital.AdmitPatient(patient1);
-
-            Patient patient2 = new Patient { Name = "Ali", NationalId = 1234, PatientId = 2 , Age = 22};
-            patient2.AddToMedicalHistory("Corona");
             hospital.AdmitPatient(patient2);
+        }
+        catch (RoomFullException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
 
+        doctor1.Diagnose(patient1, "Cold");
+        doctor2.Diagnose(patient2, "Flu");
 
-            hospital.PrintHospitalDetails();    
+        hospital.GetDetails();
 
+        hospital.DischargePatient(patient2);
+        hospital.GetDetails();
     }
-    }
+}
